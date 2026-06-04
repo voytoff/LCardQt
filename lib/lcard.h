@@ -7,6 +7,7 @@ class LCARD_EXPORT LCard
 {
 public:
   LCard();
+  void createList();
 };
 
 #endif // LCARD_H
