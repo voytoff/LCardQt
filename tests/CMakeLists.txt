@@ -14,8 +14,10 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include_directories(../lib)
+
 add_executable(test1 tst_test1.cpp)
 add_test(NAME test1 COMMAND test1)
 
-target_link_libraries(test1 PRIVATE Qt${QT_VERSION_MAJOR}::Test)
+target_link_libraries(test1 PRIVATE Qt${QT_VERSION_MAJOR}::Test LCard)
 

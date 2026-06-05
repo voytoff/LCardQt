@@ -1,4 +1,5 @@
 #include <QTest>
+#include "create.h"
 
 // add necessary includes here
 
@@ -43,7 +44,9 @@ void test1::cleanup()
 }
 
 void test1::test_case1() {
-
+  Create crete;
+  //crete.getModuleList();
+  crete.getIPAddresses();
 }
 
 QTEST_APPLESS_MAIN(test1)

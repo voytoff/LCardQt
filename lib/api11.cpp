@@ -37,11 +37,7 @@
 
 #include <QtSystemDetection>
 #include <minwindef.h>
-#if defined(Q_OS_WIN)
-#include "ltr/include/ltr11api.h"
-#elif defined(Q_OS_LINUX)
-#include "ltr/include/ltr11api.h"
-#endif
+#include "ltr11api.h"
 
 /* остальные заголовочные файлы */
 #include <stdio.h>
