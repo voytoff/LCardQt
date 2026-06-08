@@ -56,6 +56,16 @@ bool Crate::close() {
   return LTR_Close(ltr) == LTR_OK;
 }
 
+bool Crate::start()
+{
+
+}
+
+bool Crate::stop()
+{
+
+}
+
 bool Crate::isOpened() {
   return LTR_IsOpened(ltr) == LTR_OK;
 }
@@ -70,7 +80,7 @@ LCModuleInfo* Crate::info(const int &slot, const int &type) {
   if (hardware->contains(type)) return hardware->value(type);
   switch (type) {
   case 11: {
-    auto ltr11 = new class ltr11();
+    ILCModule *ltr11 = new class ltr11();
     ltr11->open(address, slot);
     auto info = ltr11->info();
     hardware->insert(type, info);
@@ -88,7 +98,7 @@ LCModuleInfo* Crate::info(const int &slot, const int &type) {
 QList<LCModuleInfo*> Crate::modules() {
   INT res;
   res = LTR_Init(ltr);
-  if(res == LTR_OK) {
+  if (res == LTR_OK) {
     res = LTR_Open(ltr);
     if (res == LTR_OK) {
       WORD mid[MODULE_MAX];

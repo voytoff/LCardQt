@@ -29,6 +29,8 @@ public slots:
   static int addresses(QList<LCCrateInfo> &array);
   bool open(const QString &addr);
   bool close();
+  bool start();
+  bool stop();
   bool isOpened();
   uint version();
   LCModuleInfo *info(const int &slot, const int &type);

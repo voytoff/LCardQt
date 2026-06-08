@@ -18,9 +18,14 @@ public:
 
 private:
   TLTR11 *hltr11;
+  QString address;
+  int slot;
 
 public slots:
-  bool open(const QString &addr, int slot, QString serial = nullptr);
+  bool open(const QString &addr, const int &slot, const QString &serial = nullptr);
+  bool start();
+  bool stop();
+  bool close();
 
 signals:
 };
