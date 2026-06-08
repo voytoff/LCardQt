@@ -8,31 +8,32 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Network)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network)
-
-include_directories("C:/Program Files (x86)/L-Card/ltr/include")
-if(WIN32)
-  set(LCARD_DIR, "C:/Program Files (x86)/L-Card")
-  include_directories("C:/Program Files (x86)/L-Card/ltr/include")
-  link_directories("C:/Program Files (x86)/L-Card/ltr/lib/msvc64")
-elseif(LINUX)
-  set(LCARD_DIR, "/usr/include")
-  include_directories("${LCARD_DIR}/ltr/include")
-  link_directories("${LCARD_DIR}/ltr/lib")
-endif()
 
 add_library(LCard SHARED
   LCard_global.h
-  lcard.cpp
-  lcard.h
+  lctypes.h
+  lcard.h lcard.cpp
   api11.h api11.cpp
-  create.h create.cpp
+  crate.h crate.cpp
+  ltr11.h ltr11.cpp
+  ilcmodule.h
 )
+
+if(WIN32)
+  set(LCARD_DIR, "C:/Program Files (x86)/L-Card")
+  target_include_directories(LCard PRIVATE "C:/Program Files (x86)/L-Card/ltr/include")
+  target_link_directories(LCard PRIVATE "C:/Program Files (x86)/L-Card/ltr/lib/msvc64")
+elseif(LINUX)
+  set(LCARD_DIR, "/usr/include")
+  target_include_directories(LCard PRIVATE "${LCARD_DIR}/ltr/include")
+  target_link_directories(LCard PRIVATE "${LCARD_DIR}/ltr/lib")
+endif()
 
 target_link_libraries(LCard PRIVATE
   Qt${QT_VERSION_MAJOR}::Core
-  Qt${QT_VERSION_MAJOR}::Network
+  Qt${QT_VERSION_MAJOR}::Network # Ubuntu/Debian: Run sudo apt install qt6-network-dev
 )
 if(WIN32)
   target_link_libraries(LCard PRIVATE

@@ -7,6 +7,7 @@ class LCARD_EXPORT LCard
 {
 public:
   LCard();
+  static QString getErrorString(int res);
 };
 
 #endif // LCARD_H
