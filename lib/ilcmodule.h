@@ -9,6 +9,13 @@ class ILCModule
 public:
   virtual ~ILCModule() {}
   virtual LCModuleInfo* info() = 0;
+  virtual bool open(const int &slot, const QString &serial = nullptr) = 0;
+  virtual bool opened() = 0;
+  virtual bool start(void *param) = 0;
+  virtual bool stop() = 0;
+  virtual INT error() const = 0;
+
+  signals:
 };
 
 // Associate the class with a unique identifier

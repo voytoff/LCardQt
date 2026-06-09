@@ -7,11 +7,16 @@
 #include <QHostAddress>
 #include <QString>
 
-Crate::Crate(QObject *parent)
+Crate::Crate(const QString &addr, QObject *parent)
   : QObject{parent}
+  , address(addr)
   , ltr(new TLTR{0})
-  , hardware(new QHash<int, LCModuleInfo*>()) {
-  LTR_Init(ltr);
+  , modules(new QHash<int, ILCModule*>()) {
+  ltr->saddr = LTRD_ADDR_DEFAULT;
+  ltr->sport = LTRD_PORT_DEFAULT;
+  if (addr.length() > 0)
+    ltr->saddr = QHostAddress(address).toIPv4Address();
+  result = LTR_Init(ltr);
 }
 
 /*static*/int Crate::addresses(QList<LCCrateInfo> &array) {
@@ -20,106 +25,130 @@ Crate::Crate(QObject *parent)
   DWORD entries_found = 0;
   DWORD entries_returned = 0;
   TLTR_CRATE_IP_ENTRY *zero = nullptr;
-  INT res = LTR_Init(&ltr);
-  if (res == LTR_OK) {
-    res = LTR_Open(&ltr);
-    if (res == LTR_OK) {
+  INT result = LTR_Init(&ltr);
+  if (result == LTR_OK) {
+    result = LTR_Open(&ltr);
+    if (result == LTR_OK) {
       // byte arr[,]; LTR_GetCrates(ltr, array);
-      res = LTR_GetListOfIPCrates(&ltr, 0, 0, 0, &entries_found, &entries_returned, zero);
-      if (res == LTR_OK && entries_found > 0) {        
+      result = LTR_GetListOfIPCrates(&ltr, 0, 0, 0, &entries_found, &entries_returned, zero);
+      if (result == LTR_OK && entries_found > 0) {
         TLTR_CRATE_IP_ENTRY tmp[entries_found];
         std::memset(tmp, 0, entries_found * sizeof(TLTR_CRATE_IP_ENTRY));
-        res = LTR_GetListOfIPCrates(&ltr, 1, 0, 0, &entries_found, &entries_returned, tmp);
-        if (res == LTR_OK && entries_found > 0) {
+        result = LTR_GetListOfIPCrates(&ltr, 1, 0, 0, &entries_found, &entries_returned, tmp);
+        if (result == LTR_OK && entries_found > 0) {
           for (int i = 0; i < entries_found; i++) {
             LCCrateInfo info = {tmp[i].ip_addr, tmp[i].flags, QString(tmp[i].serial_number), tmp[i].status};
             array.append(info);
           }
         } else {
-          qDebug() << LCard::getErrorString(res);
+          qDebug() << LCard::getErrorString(result);
         }
       } else {
-        qDebug() << LCard::getErrorString(res);
+        qDebug() << LCard::getErrorString(result);
       }
     }
   }
-  return res;
+  return result;
 }
 
-bool Crate::open(const QString &addr) {
-  address = addr;
-  ltr->saddr = QHostAddress(address).toIPv4Address();
-  return LTR_Open(ltr) == LTR_OK;
-}
-
-bool Crate::close() {
-  return LTR_Close(ltr) == LTR_OK;
-}
-
-bool Crate::start()
-{
-
-}
-
-bool Crate::stop()
-{
-
-}
-
-bool Crate::isOpened() {
-  return LTR_IsOpened(ltr) == LTR_OK;
-}
-
-uint Crate::version() {
-  DWORD version;
-  INT res = LTR_GetServerVersion(ltr, &version);
-  return res == LTR_OK ? version : 0;
-}
-
-LCModuleInfo* Crate::info(const int &slot, const int &type) {
-  if (hardware->contains(type)) return hardware->value(type);
-  switch (type) {
-  case 11: {
-    ILCModule *ltr11 = new class ltr11();
-    ltr11->open(address, slot);
-    auto info = ltr11->info();
-    hardware->insert(type, info);
-    return info;
+bool Crate::open() {
+  result = LTR_Open(ltr);
+  if (result == LTR_OK) {
+    uint v = version();
+    if (v > 0) ver = QString("%1.%2.%3.%4").arg((v >> 24) & 0xFF).arg((v >> 16) & 0xFF).arg((v >> 8) & 0xFF).arg(v & 0xFF);
+    if (init()) {
+      auto modules = hardware();
+      foreach (auto key, modules.keys()) {
+        auto m = modules.value(key);
+        m->open(key);
+      }
+    }
   }
-    break;
+  return result == LTR_OK;
+}
+
+bool Crate::init() {
+  modules->clear();
+  result = LTR_Open(ltr);
+  if (result == LTR_OK) {
+    WORD mid[MODULE_MAX];
+    result = LTR_GetCrateModules(ltr, mid);
+    if (result == LTR_OK) {
+      for (int slot = 1; slot <= MODULE_MAX; slot++) {
+        auto type = mid[slot]&0xFF;
+        if (type > 0) {
+          auto m = module(slot, mid[slot]&0xFF);
+          if (m) {
+            if (m->open(slot)) modules->insert(slot, m);
+            else {
+              result = m->error();
+              qDebug() << slot << lastError();
+            }
+          }
+        }
+      }
+    }
+  }
+  qDebug() << lastError();
+  return result == LTR_OK;
+}
+
+ILCModule* Crate::module(const int &slot, const int &type) {
+  switch (type) {
+  case 11:
+    return new class ltr11(this);
   case 114:
-    break;
   default:
     break;
   }
   return nullptr;
 }
 
-QList<LCModuleInfo*> Crate::modules() {
-  INT res;
-  res = LTR_Init(ltr);
-  if (res == LTR_OK) {
-    res = LTR_Open(ltr);
-    if (res == LTR_OK) {
-      WORD mid[MODULE_MAX];
-      res = LTR_GetCrateModules(ltr, mid);
-      if (res == LTR_OK) {
-        QList<LCModuleInfo*> result;
-        for(int i = 0; i < MODULE_MAX; i++) {
-          auto type = mid[i]&0xFF;
-          if (type > 0) {
-            auto module = info(i, mid[i]&0xFF);
-            result.append(module);
-          }
-        }
-        return result;
-      }
-    }
-  }
-  qDebug() << QString(decoder.decode(LTR_GetErrorString(res)));
-  return {};
+bool Crate::close() {
+  result = LTR_Close(ltr);
+  return result == LTR_OK;
 }
 
-void a() {
+bool Crate::start(LCParameters *params) {
+  this->params = params;
+  bool res = true;
+  foreach (auto key, params->keys()) {
+    auto m = modules->value(key);
+    if (m) {
+      res = m->start(params->value(key));
+      if (!res) {
+        result = m->error();
+        qDebug() << lastError();
+        break;
+      }
+    } else qDebug() << "Отсутствует слот с номером:" << key;
+  }
+  return res;
+}
 
+bool Crate::stop() {
+  bool res = true;
+  foreach (auto key, params->keys()) {
+    auto m = modules->value(key);
+    if (m) {
+      res = m->stop();
+      if (!res) {
+        result = m->error();
+        qDebug() << lastError();
+        break;
+      }
+    } else qDebug() << "Отсутствует слот с номером:" << key;
+  }
+  return res;
+}
+
+bool Crate::opened() {
+  result = LTR_IsOpened(ltr);
+  return result == LTR_OK;
+}
+
+uint Crate::version() {
+  DWORD version;
+  result = LTR_GetServerVersion(ltr, &version);
+  return result == LTR_OK ? version : 0;
 }

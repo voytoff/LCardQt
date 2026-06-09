@@ -1,6 +1,7 @@
 #ifndef CREATE_H
 #define CREATE_H
 
+#include "lcard.h"
 #pragma hdrstop
 #include <conio.h>
 #include <winsock2.h> // Важно подключать перед ltrapi для работы сетевых типов
@@ -9,6 +10,7 @@
 
 #include "LCard_global.h"
 #include "lctypes.h"
+#include "ilcmodule.h"
 
 #include <QObject>
 #include <QStringDecoder>
@@ -18,23 +20,36 @@
 class LCARD_EXPORT Crate : public QObject {
   Q_OBJECT
 public:
-  explicit Crate(QObject *parent = nullptr);
+  explicit Crate(const QString &addr = nullptr, QObject *parent = nullptr);
 
 private:
-  TLTR *ltr;
   QString address;
-  QHash<int, LCModuleInfo*> *hardware;
+  TLTR *ltr;
+  QString ver;
+  INT result;
+  /** загружает хеш таблицу модулей */
+  QHash<int, ILCModule*> *modules;
+  LCParameters *params;
+
+protected:
+  bool init();
+  ILCModule *module(const int &slot, const int &type);
 
 public slots:
   static int addresses(QList<LCCrateInfo> &array);
-  bool open(const QString &addr);
+  bool open();
   bool close();
-  bool start();
+  bool start(LCParameters *params);
   bool stop();
-  bool isOpened();
+  bool opened();
   uint version();
-  LCModuleInfo *info(const int &slot, const int &type);
-  QList<LCModuleInfo*> modules();
+  INT error() const {return result;}
+  QString lastError() const {return LCard::getErrorString(result);}
+  QString &ip() {return address;}
+  /** возвращает информацию о модуле крейта
+   *  key = номер слота
+   */
+  QHash<int, ILCModule*> &hardware() const {return *modules;}
 
 signals:
 
