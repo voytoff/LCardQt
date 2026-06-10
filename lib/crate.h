@@ -52,6 +52,7 @@ public slots:
   QHash<int, ILCModule*> &hardware() const {return *modules;}
 
 signals:
+  void dataReady(ILCModule *module, const int &count, double *data);
 
 };
 

@@ -8,8 +8,16 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS
+  Core
+  Network
+  Concurrent
+)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
+  Core
+  Network
+  Concurrent
+)
 
 add_library(LCard SHARED
   LCard_global.h
@@ -19,6 +27,9 @@ add_library(LCard SHARED
   crate.h crate.cpp
   ltr11.h ltr11.cpp
   ilcmodule.h
+
+  ltrworker.h ltrworker.cpp
+  ltrbase.h ltrbase.cpp
 )
 
 if(WIN32)
@@ -34,6 +45,7 @@ endif()
 target_link_libraries(LCard PRIVATE
   Qt${QT_VERSION_MAJOR}::Core
   Qt${QT_VERSION_MAJOR}::Network # Ubuntu/Debian: Run sudo apt install qt6-network-dev
+  Qt${QT_VERSION_MAJOR}::Concurrent
 )
 if(WIN32)
   target_link_libraries(LCard PRIVATE

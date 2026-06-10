@@ -115,6 +115,9 @@ bool Crate::start(LCParameters *params) {
   foreach (auto key, params->keys()) {
     auto m = modules->value(key);
     if (m) {
+      connect(m->base(), &LTRBase::dataReady, this, [=](ILCModule *module, const int &count, double *data) {
+        emit dataReady(module, count, data);
+      });
       res = m->start(params->value(key));
       if (!res) {
         result = m->error();

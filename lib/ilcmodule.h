@@ -4,6 +4,7 @@
 #include "lctypes.h"
 #include <QtPlugin>
 
+class LTRBase;
 class ILCModule
 {
 public:
@@ -14,8 +15,7 @@ public:
   virtual bool start(void *param) = 0;
   virtual bool stop() = 0;
   virtual INT error() const = 0;
-
-  signals:
+  virtual LTRBase* base() const = 0;
 };
 
 // Associate the class with a unique identifier
