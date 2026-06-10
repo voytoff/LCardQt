@@ -1,18 +1,23 @@
 #include "ltrworker.h"
+#include "lctypes.h"
+#include "ltr11.h"
 
-LTRWorker::LTRWorker(TLTR11 *module, const int &dataBuferLength, double *data, QObject *parent)
+LTRWorker::LTRWorker(LTRBase *module, TLTR11 *ltr, const int &dataBuferLength, double *data, QObject *parent)
   : QObject{parent}
   , module(module)
+  , ltr(ltr)
   , dataBuferLength(dataBuferLength)
   , data(data) {
+}
 
+void LTRWorker::doWork() {
   DWORD *rbuf = (DWORD*)malloc(dataBuferLength*sizeof(DWORD));
   while (true) {
     INT recvd;
     /* в таймауте учитываем время выполнения самого преобразования*/
-    DWORD tout = RECV_TOUT + (DWORD)(RECV_BLOCK_CH_SIZE/module->ChRate + 1);
+    DWORD tout = RECV_TOUT + (DWORD)(RECV_BLOCK_CH_SIZE/ltr->ChRate + 1);
     /* получение данных от LTR11 */
-    recvd = LTR11_Recv(module, rbuf, NULL, dataBuferLength, tout);
+    recvd = LTR11_Recv(ltr, rbuf, NULL, dataBuferLength, tout);
 
     /* Значение меньше нуля соответствуют коду ошибки */
     if (recvd < 0) {
@@ -24,12 +29,12 @@ LTRWorker::LTRWorker(TLTR11 *module, const int &dataBuferLength, double *data, Q
     }
 
     /* сохранение принятых и обработанных данных в буфере */
-    result = LTR11_ProcessData(module, rbuf, data, &recvd, TRUE, TRUE);
+    result = LTR11_ProcessData(ltr, rbuf, data, &recvd, TRUE, TRUE);
     if (result != LTR_OK) continue;
     else
-      emit dataReady((ILCModule*)module, module->LChQnt, data);
+      emit dataReady(module, ltr->LChQnt, data);
 
   } //while (!f_out && (err==LTR_OK))
   free(rbuf);
-
 }
+

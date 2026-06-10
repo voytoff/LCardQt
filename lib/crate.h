@@ -10,7 +10,7 @@
 
 #include "LCard_global.h"
 #include "lctypes.h"
-#include "ilcmodule.h"
+#include "LTRBase.h"
 
 #include <QObject>
 #include <QStringDecoder>
@@ -28,12 +28,12 @@ private:
   QString ver;
   INT result;
   /** загружает хеш таблицу модулей */
-  QHash<int, ILCModule*> *modules;
+  QHash<int, LTRBase*> *modules;
   LCParameters *params;
 
 protected:
   bool init();
-  ILCModule *module(const int &slot, const int &type);
+  LTRBase *module(const int &slot, const int &type);
 
 public slots:
   static int addresses(QList<LCCrateInfo> &array);
@@ -49,10 +49,10 @@ public slots:
   /** возвращает информацию о модуле крейта
    *  key = номер слота
    */
-  QHash<int, ILCModule*> &hardware() const {return *modules;}
+  QHash<int, LTRBase*> &hardware() const {return *modules;}
 
 signals:
-  void dataReady(ILCModule *module, const int &count, double *data);
+  void dataReady(LTRBase *module, const int &count, double *data);
 
 };
 

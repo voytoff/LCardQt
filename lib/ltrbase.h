@@ -1,23 +1,31 @@
 #ifndef LTRBASE_H
 #define LTRBASE_H
 
-#include "ilcmodule.h"
+#include "lctypes.h"
+#include "lcard.h"
 #include <QObject>
 
 class LTRBase : public QObject
 {
   Q_OBJECT
 public:
-  //virtual LCModuleInfo* info() = 0;
+  LTRBase(QObject *parent = nullptr);
   virtual bool open(const int &slot, const QString &serial = nullptr) = 0;
   virtual bool opened() = 0;
   virtual bool start(void *param) = 0;
   virtual bool stop() = 0;
-  virtual INT error() const = 0;
+  virtual LCModuleInfo* info() = 0;
   virtual LTRBase* base() const = 0;
 
+  INT error() const {return result;}
+  QString lastError() const {return LCard::getErrorString(result);}
+
+protected:
+  INT result;
+  int slot = 0;
+
 signals:
-  void dataReady(ILCModule *module, const int &count, double *data);
+  void dataReady(LTRBase *module, const int &count, double *data);
 
 };
 

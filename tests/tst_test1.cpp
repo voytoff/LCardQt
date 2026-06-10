@@ -1,5 +1,8 @@
 #include <QTest>
+#include <QMainWindow>
 #include "crate.h"
+#include "ltrbase.h"
+#include "dialog.h"
 
 class test1 : public QObject
 {
@@ -14,6 +17,7 @@ private slots:
   void init();
   void cleanupTestCase();
   void cleanup();
+  void test_case();
   void test_case1();
 };
 
@@ -37,7 +41,16 @@ void test1::cleanup() {
   // code to be executed after each test function
 }
 
+
+void test1::test_case() {
+  int n = 0;
+  QApplication app(n, nullptr);
+  Dialog d;
+  d.exec();
+}
+
 void test1::test_case1() {
+  return;
   QList<LCCrateInfo> array;
   int res = Crate::addresses(array);
   if (res != LTR_OK) return;
@@ -80,7 +93,7 @@ void test1::test_case1() {
   });
 
   int n = 0;
-  connect(&crate, &Crate::dataReady, this, [&n](ILCModule *module, const int &count, double *data) {
+  connect(&crate, &Crate::dataReady, this, [&n](LTRBase *module, const int &count, double *data) {
     QDebug dbg = qDebug();
     dbg << "Блок: " << n++;
     for (int i = 0; i < count; i++) {
@@ -92,6 +105,7 @@ void test1::test_case1() {
       }
     }
   });
+
   if (!crate.start(params)) {
     qDebug() << crate.lastError();
     return;

@@ -1,26 +1,29 @@
 #ifndef LTRWORKER_H
 #define LTRWORKER_H
 
-#include "ilcmodule.h"
+#include "ltr11api.h"
+#include "ltrbase.h"
+
 #include <QObject>
 #include <QDebug>
 
 class LTRWorker : public QObject {
   Q_OBJECT
 public:
-  explicit LTRWorker(TLTR11 *module, const int &dataBuferLength, double *data, QObject *parent = nullptr);
-  virtual void doWork() = 0;
+  explicit LTRWorker(LTRBase *module, TLTR11 *ltr, const int &dataBuferLength, double *data, QObject *parent = nullptr);
+  virtual void doWork();
 
   INT result;
 
 private:
-  TLTR11 *module;
+  LTRBase *module;
+  TLTR11 *ltr;
   int dataBuferLength;
   double *data;
 
 signals:
   void finished();
-  void dataReady(ILCModule *module, const int &count, double *data);
+  void dataReady(LTRBase *module, const int &count, double *data);
 
 };
 

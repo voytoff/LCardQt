@@ -1,5 +1,6 @@
 #include "ltr11.h"
 #include "lctypes.h"
+#include "ltrworker.h"
 #include <QHostAddress>
 #include <QDateTime>
 #include <QString>
@@ -8,8 +9,7 @@
 
 ltr11::ltr11(QObject *parent)
   : LTRBase{parent}
-  , ltr(new TLTR11{})
-  , slot(0) {
+  , ltr(new TLTR11{}) {
   /* инициализация дескриптора модуля */
   LTR11_Init(ltr);
 }
@@ -80,23 +80,36 @@ bool ltr11::start(void* param) {
 
   result = LTR11_Start(ltr);
 
-  bool out = false;
-  QTimer::singleShot(10000, [&out]() {
-    out = true;
-  });
-  dataThreadFunction(recv_data_cnt, data, out);
+  //dataThreadFunction(recv_data_cnt, data);return true;
   // запуск потока
-  QFuture<void> future = QtConcurrent::run([this, &data, &out, &recv_data_cnt]() {
-    dataThreadFunction(recv_data_cnt, data, out);
-  });
-  future.waitForFinished();
-  free(data);
+  ///QFuture<void> future = QtConcurrent::run([this, &data, &recv_data_cnt]() {
+  ///  dataThreadFunction(ltr, recv_data_cnt, data);
+  ///});
+  ///return true;
+  ///future.waitForFinished();
+
+
+  QThread* thread = new QThread();
+  LTRWorker* worker = new LTRWorker(this, ltr, recv_data_cnt, data);
+
+  worker->moveToThread(thread);
+
+  // Connect signals and slots
+  QObject::connect(thread, &QThread::started, worker, &LTRWorker::doWork);
+  QObject::connect(worker, &LTRWorker::finished, thread, &QThread::quit);
+  QObject::connect(worker, &LTRWorker::finished, worker, &QObject::deleteLater);
+  QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+
+  // Start the thread execution
+  thread->start();
+
+  //free(data);
   return result == LTR_OK;
 }
 
-void ltr11::dataThreadFunction(const int &dataBuferLength, double *data, bool &out) {
+void ltr11::dataThreadFunction(TLTR11 *ltr, const int &dataBuferLength, double *data) {
   DWORD *rbuf = (DWORD*)malloc(dataBuferLength*sizeof(DWORD));
-  while (!out /*&& (result == LTR_OK)*/) {
+  while (true) {
     INT recvd;
     /* в таймауте учитываем время выполнения самого преобразования*/
     DWORD tout = RECV_TOUT + (DWORD)(RECV_BLOCK_CH_SIZE/ltr->ChRate + 1);

@@ -1,5 +1,3 @@
 #include "ltrbase.h"
 
-LTRBase::LTRBase(QObject *parent)
-  : QObject{parent}
-{}
+LTRBase::LTRBase(QObject *parent) : QObject{parent} {}

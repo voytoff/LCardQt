@@ -26,8 +26,6 @@ add_library(LCard SHARED
   api11.h api11.cpp
   crate.h crate.cpp
   ltr11.h ltr11.cpp
-  ilcmodule.h
-
   ltrworker.h ltrworker.cpp
   ltrbase.h ltrbase.cpp
 )

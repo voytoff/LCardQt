@@ -11,7 +11,7 @@ Crate::Crate(const QString &addr, QObject *parent)
   : QObject{parent}
   , address(addr)
   , ltr(new TLTR{0})
-  , modules(new QHash<int, ILCModule*>()) {
+  , modules(new QHash<int, LTRBase*>()) {
   ltr->saddr = LTRD_ADDR_DEFAULT;
   ltr->sport = LTRD_PORT_DEFAULT;
   if (addr.length() > 0)
@@ -93,7 +93,7 @@ bool Crate::init() {
   return result == LTR_OK;
 }
 
-ILCModule* Crate::module(const int &slot, const int &type) {
+LTRBase* Crate::module(const int &slot, const int &type) {
   switch (type) {
   case 11:
     return new class ltr11(this);
@@ -115,7 +115,7 @@ bool Crate::start(LCParameters *params) {
   foreach (auto key, params->keys()) {
     auto m = modules->value(key);
     if (m) {
-      connect(m->base(), &LTRBase::dataReady, this, [=](ILCModule *module, const int &count, double *data) {
+      connect(m->base(), &LTRBase::dataReady, this, [=](LTRBase *module, const int &count, double *data) {
         emit dataReady(module, count, data);
       });
       res = m->start(params->value(key));
