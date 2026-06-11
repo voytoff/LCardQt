@@ -1,6 +1,7 @@
 #ifndef DIALOG_H
 #define DIALOG_H
 
+#include "crate.h"
 #include <QDialog>
 
 namespace Ui {
@@ -15,12 +16,16 @@ public:
   explicit Dialog(QWidget *parent = nullptr);
   ~Dialog();
 
-  void accept() override;
+  void accept() override {};
+  void reject() override;
 
 private:
   Ui::Dialog *ui;
+  Crate *crate;
+  bool closed = false;
+
 private slots:
-  void start();
+  bool start();
   void line(QString s);
 };
 

@@ -29,7 +29,7 @@ private:
   INT result;
   /** загружает хеш таблицу модулей */
   QHash<int, LTRBase*> *modules;
-  LCParameters *params;
+  LCParameters *params = nullptr;
 
 protected:
   bool init();

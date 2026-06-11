@@ -16,8 +16,8 @@ public:
   LTRBase* base() const override  {return (LTRBase*)this;}
 
 private:
-  TLTR11 *ltr;
-  void dataThreadFunction(TLTR11 *ltr, const int &dataBuferLength, double *data);
+  TLTR11 *ltr = nullptr;
+  void dataThreadFunction(const int &dataBuferLength, double *data);
 
 public slots:
   bool open(const int &slot, const QString &serial = nullptr) override;

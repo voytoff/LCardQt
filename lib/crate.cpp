@@ -112,41 +112,45 @@ bool Crate::close() {
 bool Crate::start(LCParameters *params) {
   this->params = params;
   bool res = true;
-  foreach (auto key, params->keys()) {
-    auto m = modules->value(key);
-    if (m) {
-      connect(m->base(), &LTRBase::dataReady, this, [=](LTRBase *module, const int &count, double *data) {
-        emit dataReady(module, count, data);
-      });
-      res = m->start(params->value(key));
-      if (!res) {
-        result = m->error();
-        qDebug() << lastError();
-        break;
-      }
-    } else qDebug() << "Отсутствует слот с номером:" << key;
+  if (params && params->count() > 0) {
+    foreach (auto key, params->keys()) {
+      auto m = modules->value(key);
+      if (m) {
+        connect(m->base(), &LTRBase::dataReady, this, [=](LTRBase *module, const int &count, double *data) {
+          emit dataReady(module, count, data);
+        });
+        res = m->start(params->value(key));
+        if (!res) {
+          result = m->error();
+          qDebug() << lastError();
+          break;
+        }
+      } else qDebug() << "Отсутствует слот с номером:" << key;
+    }
   }
   return res;
 }
 
 bool Crate::stop() {
   bool res = true;
-  foreach (auto key, params->keys()) {
-    auto m = modules->value(key);
-    if (m) {
-      res = m->stop();
-      if (!res) {
-        result = m->error();
-        qDebug() << lastError();
-        break;
-      }
-    } else qDebug() << "Отсутствует слот с номером:" << key;
+  if (params && params->count() > 0) {
+    foreach (auto key, params->keys()) {
+      auto m = modules->value(key);
+      if (m) {
+        res = m->stop();
+        if (!res) {
+          result = m->error();
+          qDebug() << lastError();
+          break;
+        }
+      } else qDebug() << "Отсутствует слот с номером:" << key;
+    }
   }
   return res;
 }
 
 bool Crate::opened() {
-  result = LTR_IsOpened(ltr);
+  result = ltr ? LTR_IsOpened(ltr) : false;
   return result == LTR_OK;
 }
 

@@ -27,7 +27,7 @@
       <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Close|QDialogButtonBox::StandardButton::Retry</set>
+      <set>QDialogButtonBox::StandardButton::Abort|QDialogButtonBox::StandardButton::Close|QDialogButtonBox::StandardButton::Retry</set>
      </property>
     </widget>
    </item>

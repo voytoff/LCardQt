@@ -3,13 +3,14 @@
 #include "ui_dialog.h"
 #include <QString>
 #include <QPushButton>
+#include <QFontDatabase>
 
 Dialog::~Dialog() {
   delete ui;
 }
 
-void Dialog::accept() {
-  return;
+void Dialog::reject() {
+  if (closed) QDialog::close();
 }
 
 Dialog::Dialog(QWidget *parent)
@@ -17,9 +18,21 @@ Dialog::Dialog(QWidget *parent)
   , ui(new Ui::Dialog)
 {
   ui->setupUi(this);
+  //ui->log->setStyleSheet("font-family: monospace;");
+  ui->log->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+
   connect(ui->buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
-    if (button == ui->buttonBox->button(QDialogButtonBox::Retry))
-      start();
+    if (button == ui->buttonBox->button(QDialogButtonBox::Retry)) {
+      if (!start()) {
+        if (!crate->stop() || !crate->close())
+          line(crate->lastError());
+      }
+    } else {
+      if (crate->opened() && (!crate->stop() || !crate->close()))
+        line(crate->lastError());
+      if (button == ui->buttonBox->button(QDialogButtonBox::Close))
+        closed = true;
+    }
   });
 }
 
@@ -29,17 +42,17 @@ void Dialog::line(QString s) {
   }, Qt::QueuedConnection);
 }
 
-void Dialog::start() {
-  Crate crate;
-  if (crate.open()) {
-    foreach (auto m, crate.hardware()) {
+bool Dialog::start() {
+  crate = new Crate();
+  if (crate->open()) {
+    foreach (auto m, crate->hardware()) {
       auto i = m->info();
       line(QString("%1 : %2 : %3 : %4 : %5 : %6").arg(i->slot).arg(i->type).arg(i->name, i->serial).arg(i->version).arg(i->date.toString()));
     }
   }
   else {
-    line(crate.lastError());
-    return;
+    line(crate->lastError());
+    return false;
   }
 
   LCChannels11 ch11;
@@ -63,26 +76,21 @@ void Dialog::start() {
   });
 
   int n = 0;
-  connect(&crate, &Crate::dataReady, this, [&n, this](LTRBase *module, const int &count, double *data) {
+  connect(crate, &Crate::dataReady, this, [=, &n](LTRBase *module, const int &count, double *data) {
     QString s;
-    s.append(QString("Блок: %1").arg(n++));
+    auto i = module->info();
+    s.append(QString("Модуль: %1:%2, блок: %3 >>  ").arg(i->name, i->serial).arg(n++));
     for (int i = 0; i < count; i++) {
       s.append(QString::number(data[i]));
-      if (i == (count-1)) {
-        s.append("\n");
-      } else {
+      if (i < (count-1))
         s.append(", ");
-      }
     }
     line(s);
   });
 
-  if (!crate.start(params)) {
-    line(crate.lastError());
-    return;
+  if (!crate->start(params)) {
+    line(crate->lastError());
+    return false;
   }
-  //if (!crate.stop() || !crate.close()) {
-  //  line(crate.lastError());
-  //  return;
-  //}
+  return true;
 }

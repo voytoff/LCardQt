@@ -82,32 +82,23 @@ bool ltr11::start(void* param) {
 
   //dataThreadFunction(recv_data_cnt, data);return true;
   // запуск потока
-  ///QFuture<void> future = QtConcurrent::run([this, &data, &recv_data_cnt]() {
-  ///  dataThreadFunction(ltr, recv_data_cnt, data);
-  ///});
-  ///return true;
-  ///future.waitForFinished();
-
-
   QThread* thread = new QThread();
-  LTRWorker* worker = new LTRWorker(this, ltr, recv_data_cnt, data);
-
+  //LTRWorker* worker = new LTRWorker(this, ltr, recv_data_cnt, data);
+  LTRWorker* worker = new LTRWorker(recv_data_cnt, data, [=]() {dataThreadFunction(recv_data_cnt, data);});
   worker->moveToThread(thread);
-
-  // Connect signals and slots
   QObject::connect(thread, &QThread::started, worker, &LTRWorker::doWork);
+  QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+  QObject::connect(worker, &LTRWorker::dataReady, this, &ltr11::dataReady);
   QObject::connect(worker, &LTRWorker::finished, thread, &QThread::quit);
   QObject::connect(worker, &LTRWorker::finished, worker, &QObject::deleteLater);
-  QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
 
-  // Start the thread execution
   thread->start();
 
   //free(data);
   return result == LTR_OK;
 }
 
-void ltr11::dataThreadFunction(TLTR11 *ltr, const int &dataBuferLength, double *data) {
+void ltr11::dataThreadFunction(const int &dataBuferLength, double *data) {
   DWORD *rbuf = (DWORD*)malloc(dataBuferLength*sizeof(DWORD));
   while (true) {
     INT recvd;
