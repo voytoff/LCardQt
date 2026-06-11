@@ -37,7 +37,7 @@ if(WIN32)
 elseif(LINUX)
   set(LCARD_DIR, "/usr/include")
   target_include_directories(LCard PRIVATE "/usr/include/ltr/include")
-  target_link_directories(LCard PRIVATE "${LCARD_DIR}/usr/lib")
+  target_link_directories(LCard PRIVATE "/usr/lib")
 endif()
 
 target_link_libraries(LCard PRIVATE
