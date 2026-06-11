@@ -3,14 +3,20 @@
 
 #include "lcard.h"
 #pragma hdrstop
+#ifdef _WIN32
 #include <conio.h>
+#include <locale.h>
 #include <winsock2.h> // Важно подключать перед ltrapi для работы сетевых типов
+#else
+#include <signal.h>
+#include <unistd.h>
+#endif
 #pragma argsused
 #include "ltrapi.h"
 
 #include "LCard_global.h"
 #include "lctypes.h"
-#include "LTRBase.h"
+#include "ltrbase.h"
 
 #include <QObject>
 #include <QStringDecoder>

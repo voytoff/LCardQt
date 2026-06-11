@@ -75,11 +75,11 @@ bool Dialog::start() {
     ch11
   });
 
-  int n = 0;
-  connect(crate, &Crate::dataReady, this, [=, &n](LTRBase *module, const int &count, double *data) {
+  connect(crate, &Crate::dataReady, this, [=](LTRBase *module, const int &count, double *data) {
     QString s;
+    module->count++;
     auto i = module->info();
-    s.append(QString("Модуль: %1:%2, блок: %3 >>  ").arg(i->name, i->serial).arg(n++));
+    s.append(QString("Модуль: %1:%2, блок: %3 >>  ").arg(i->name, i->serial).arg(module->count));
     for (int i = 0; i < count; i++) {
       s.append(QString::number(data[i]));
       if (i < (count-1))

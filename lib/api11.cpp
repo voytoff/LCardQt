@@ -34,9 +34,7 @@
     и сохраните изменения в файле. А также следует убедится, что в настройках
     консоли стоит шрифт с поддержкой русского языка (например Consolas).
 */
-
 #include <QtSystemDetection>
-#include <minwindef.h>
 #include "ltr11api.h"
 
 /* остальные заголовочные файлы */
@@ -44,6 +42,7 @@
 #include <stdlib.h>
 #include <string>
 #ifdef _WIN32
+#include <minwindef.h>
 #include <locale.h>
 #include <conio.h>
 #else

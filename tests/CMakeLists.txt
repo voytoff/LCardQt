@@ -35,8 +35,7 @@ add_executable(test1
 if(WIN32)
   include_directories("C:/Program Files (x86)/L-Card/ltr/include")
 elseif(LINUX)
-  set(test1, "/usr/include")
-  include_directories("${LCARD_DIR}/ltr/include")
+  include_directories("/usr/include/ltr/include")
 endif()
 
 add_test(NAME test1 COMMAND test1)

@@ -36,8 +36,8 @@ if(WIN32)
   target_link_directories(LCard PRIVATE "C:/Program Files (x86)/L-Card/ltr/lib/msvc64")
 elseif(LINUX)
   set(LCARD_DIR, "/usr/include")
-  target_include_directories(LCard PRIVATE "${LCARD_DIR}/ltr/include")
-  target_link_directories(LCard PRIVATE "${LCARD_DIR}/ltr/lib")
+  target_include_directories(LCard PRIVATE "/usr/include/ltr/include")
+  target_link_directories(LCard PRIVATE "${LCARD_DIR}/usr/lib")
 endif()
 
 target_link_libraries(LCard PRIVATE

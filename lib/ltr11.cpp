@@ -1,6 +1,7 @@
 #include "ltr11.h"
 #include "lctypes.h"
 #include "ltrworker.h"
+
 #include <QHostAddress>
 #include <QDateTime>
 #include <QString>

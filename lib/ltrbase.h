@@ -19,6 +19,7 @@ public:
 
   INT error() const {return result;}
   QString lastError() const {return LCard::getErrorString(result);}
+  int count = 0;
 
 protected:
   INT result;
