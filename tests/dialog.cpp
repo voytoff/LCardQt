@@ -24,11 +24,11 @@ Dialog::Dialog(QWidget *parent)
   connect(ui->buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
     if (button == ui->buttonBox->button(QDialogButtonBox::Retry)) {
       if (!start()) {
-        if (!crate->stop() || !crate->close())
+        if (!crate->close())
           line(crate->lastError());
       }
     } else {
-      if (crate->opened() && (!crate->stop() || !crate->close()))
+      if (crate->opened() && (!crate->close()))
         line(crate->lastError());
       if (button == ui->buttonBox->button(QDialogButtonBox::Close))
         closed = true;
@@ -76,10 +76,12 @@ bool Dialog::start() {
   });
 
   connect(crate, &Crate::dataReady, this, [=](LTRBase *module, const int &count, double *data) {
+    if (!data) return;
+    if (count == 0) return;
+    if (!module->state.running) return;
     QString s;
-    module->count++;
     auto i = module->info();
-    s.append(QString("Модуль: %1:%2, блок: %3 >>  ").arg(i->name, i->serial).arg(module->count));
+    s.append(QString("Модуль: %1:%2, блок: %3 >>  ").arg(i->name, i->serial).arg(module->state.count));
     for (int i = 0; i < count; i++) {
       s.append(QString::number(data[i]));
       if (i < (count-1))

@@ -23,8 +23,7 @@ public slots:
   bool open(const int &slot, const QString &serial = nullptr) override;
   bool opened() override;
   bool start(void *param) override;
-  bool stop() override;
-  bool close();
+  bool close() override;
   LCModuleInfo* info() override;
 
 signals:

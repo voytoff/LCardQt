@@ -10,11 +10,10 @@ LTRWorker::LTRWorker(LTRBase *module, TLTR11 *ltr, const int &dataBuferLength, d
   , callback() {
 }
 
-LTRWorker::LTRWorker(const int &dataBuferLength, double *data, const std::function<void ()> callback, QObject *parent)
+LTRWorker::LTRWorker(QThread *thread, const std::function<void ()> callback, QObject *parent)
   : QObject{parent}
   , callback(callback)
-  , dataBuferLength(dataBuferLength)
-  , data(data) {
+  , thread(thread) {
 }
 
 void LTRWorker::doWork() {
@@ -46,5 +45,6 @@ void LTRWorker::doWork() {
     } //while (!f_out && (err==LTR_OK))
     free(rbuf);
   }
+  emit finished();
 }
 

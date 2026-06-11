@@ -88,8 +88,7 @@ bool Crate::init() {
         }
       }
     }
-  }
-  qDebug() << lastError();
+  } else qDebug() << lastError();
   return result == LTR_OK;
 }
 
@@ -102,11 +101,6 @@ LTRBase* Crate::module(const int &slot, const int &type) {
     break;
   }
   return nullptr;
-}
-
-bool Crate::close() {
-  result = LTR_Close(ltr);
-  return result == LTR_OK;
 }
 
 bool Crate::start(LCParameters *params) {
@@ -131,13 +125,13 @@ bool Crate::start(LCParameters *params) {
   return res;
 }
 
-bool Crate::stop() {
+bool Crate::close() {
   bool res = true;
   if (params && params->count() > 0) {
     foreach (auto key, params->keys()) {
       auto m = modules->value(key);
       if (m) {
-        res = m->stop();
+        res = m->close();
         if (!res) {
           result = m->error();
           qDebug() << lastError();
@@ -146,7 +140,9 @@ bool Crate::stop() {
       } else qDebug() << "Отсутствует слот с номером:" << key;
     }
   }
-  return res;
+  if (result == LTR_OK)
+    result = LTR_Close(ltr);
+  return result == LTR_OK;
 }
 
 bool Crate::opened() {

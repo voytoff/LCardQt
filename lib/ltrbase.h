@@ -5,6 +5,7 @@
 #include "lcard.h"
 #include <QObject>
 
+class LTRWorker;
 class LTRBase : public QObject
 {
   Q_OBJECT
@@ -13,17 +14,19 @@ public:
   virtual bool open(const int &slot, const QString &serial = nullptr) = 0;
   virtual bool opened() = 0;
   virtual bool start(void *param) = 0;
-  virtual bool stop() = 0;
+  virtual bool close() = 0;
   virtual LCModuleInfo* info() = 0;
   virtual LTRBase* base() const = 0;
 
   INT error() const {return result;}
   QString lastError() const {return LCard::getErrorString(result);}
-  int count = 0;
+  LTRWorker *worker = nullptr;
+  ThreadState state;
 
 protected:
   INT result;
   int slot = 0;
+  double *data = nullptr;
 
 signals:
   void dataReady(LTRBase *module, const int &count, double *data);

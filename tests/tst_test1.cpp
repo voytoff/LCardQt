@@ -43,6 +43,7 @@ void test1::cleanup() {
 
 
 void test1::test_case() {
+  qSetMessagePattern("[%{time h:mm:ss.zzz}] [%{type}] %{function} - %{message}");
   int n = 0;
   QApplication app(n, nullptr);
   Dialog d;
@@ -110,7 +111,7 @@ void test1::test_case1() {
     qDebug() << crate.lastError();
     return;
   }
-  if (!crate.stop() || !crate.close()) {
+  if (!crate.close()) {
     qDebug() << crate.lastError();
     return;
   }

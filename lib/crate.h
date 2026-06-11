@@ -46,7 +46,6 @@ public slots:
   bool open();
   bool close();
   bool start(LCParameters *params);
-  bool stop();
   bool opened();
   uint version();
   INT error() const {return result;}

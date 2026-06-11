@@ -13,6 +13,11 @@
 /* таймаут на ожидание данных при приеме (без учета времени преобразования) */
 #define RECV_TOUT  4000
 
+struct ThreadState {
+  bool running = false;
+  long count = 0;
+};
+
 struct LCCrateInfo {
   ulong ipAddress;        // IP-адрес крейта. Формат аналогичен полю saddr в #TLTR
   QString strAddress() const {return QHostAddress(ipAddress).toString();}
