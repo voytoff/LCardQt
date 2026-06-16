@@ -11,13 +11,20 @@ class LTRWorker : public QObject {
   Q_OBJECT
 public:
   explicit LTRWorker(LTRBase *module, TLTR11 *ltr, const int &dataBuferLength, double *data, QObject *parent = nullptr);
-  explicit LTRWorker(QThread* thread, const std::function<void()> callback, QObject *parent = nullptr);
+  explicit LTRWorker(const std::function<void()> callback, QObject *parent = nullptr);
+  ~LTRWorker();
 
   INT result;
-  QThread *thread;
+
+private:
+  QThread *thread = nullptr;
 
 public slots:
   void doWork();
+  void start();
+  void quit();
+  void terminate();
+  bool wait(unsigned long time = std::numeric_limits<unsigned long>::max());
 
 private:
   LTRBase *module;

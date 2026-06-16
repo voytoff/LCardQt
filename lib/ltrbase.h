@@ -5,13 +5,12 @@
 #include "lcard.h"
 #include <QObject>
 
-class LTRWorker;
-class LTRBase : public QObject
-{
+class Worker;
+class LTRBase : public QObject {
   Q_OBJECT
 public:
-  LTRBase(QObject *parent = nullptr);
-  virtual bool open(const int &slot, const QString &serial = nullptr) = 0;
+  LTRBase(const int &slot, QObject *parent = nullptr);
+  virtual bool open(const QString &serial = nullptr) = 0;
   virtual bool opened() = 0;
   virtual bool start(void *param) = 0;
   virtual bool close() = 0;
@@ -20,15 +19,17 @@ public:
 
   INT error() const {return result;}
   QString lastError() const {return LCard::getErrorString(result);}
-  LTRWorker *worker = nullptr;
+  Worker *worker = nullptr;
   ThreadState state;
+  int slot = 0;
 
 protected:
   INT result;
-  int slot = 0;
   double *data = nullptr;
+  void pause(int msec);
 
 signals:
+  void finished();
   void dataReady(LTRBase *module, const int &count, double *data);
 
 };

@@ -15,8 +15,7 @@ void Dialog::reject() {
 
 Dialog::Dialog(QWidget *parent)
   : QDialog(parent)
-  , ui(new Ui::Dialog)
-{
+  , ui(new Ui::Dialog) {
   ui->setupUi(this);
   //ui->log->setStyleSheet("font-family: monospace;");
   ui->log->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
@@ -24,14 +23,21 @@ Dialog::Dialog(QWidget *parent)
   connect(ui->buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
     if (button == ui->buttonBox->button(QDialogButtonBox::Retry)) {
       if (!start()) {
+        //if (!crate->close())
+        line(crate->lastError());
+        crate->deleteLater();
+        crate = nullptr;
+      }
+    } else if (crate) {
+      if (crate->opened()) {
         if (!crate->close())
           line(crate->lastError());
+        crate = nullptr;
       }
-    } else {
-      if (crate->opened() && (!crate->close()))
-        line(crate->lastError());
-      if (button == ui->buttonBox->button(QDialogButtonBox::Close))
+      if (button == ui->buttonBox->button(QDialogButtonBox::Close)) {
         closed = true;
+        exit(0);
+      }
     }
   });
 }
@@ -44,14 +50,10 @@ void Dialog::line(QString s) {
 
 bool Dialog::start() {
   crate = new Crate();
-  if (crate->open()) {
-    foreach (auto m, crate->hardware()) {
-      auto i = m->info();
-      line(QString("%1 : %2 : %3 : %4 : %5 : %6").arg(i->slot).arg(i->type).arg(i->name, i->serial).arg(i->version).arg(i->date.toString()));
-    }
-  }
-  else {
+  if (!crate->open()) {
     line(crate->lastError());
+    crate->deleteLater();
+    crate = nullptr;
     return false;
   }
 
@@ -93,6 +95,10 @@ bool Dialog::start() {
   if (!crate->start(params)) {
     line(crate->lastError());
     return false;
+  }
+  foreach (auto m, crate->hardware()) {
+    auto i = m->info();
+    line(QString("%1 : %2 : %3 : %4 : %5 : %6").arg(i->slot).arg(i->type).arg(i->name, i->serial).arg(i->version).arg(i->date.toString()));
   }
   return true;
 }

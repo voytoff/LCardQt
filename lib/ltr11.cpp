@@ -1,6 +1,7 @@
 #include "ltr11.h"
 #include "lctypes.h"
 #include "ltrworker.h"
+#include "worker.h"
 
 #include <QHostAddress>
 #include <QDateTime>
@@ -8,16 +9,15 @@
 #include <QFuture>
 #include <QtConcurrent>
 
-ltr11::ltr11(QObject *parent)
-  : LTRBase{parent}
+ltr11::ltr11(const int &slot, QObject *parent)
+  : LTRBase(slot, parent)
   , ltr(new TLTR11{}) {
   /* инициализация дескриптора модуля */
   LTR11_Init(ltr);
 }
 
-bool ltr11::open(const int &slot, const QString &serial) {
+bool ltr11::open(const QString &serial) {
   if (opened()) return LTR_OK;
-  this->slot = slot;
   /* открытие канала связи с модулем, установленным в заданный слот */
   result = LTR11_Open(ltr, QHostAddress(crate()->ip()).toIPv4Address(), LTRD_PORT_DEFAULT, serial.toUtf8().data(), slot);
   if (result == LTR_OK)
@@ -28,18 +28,17 @@ bool ltr11::open(const int &slot, const QString &serial) {
 
 bool ltr11::opened() {
   result = LTR11_IsOpened(ltr);
+  qDebug() << lastError();
   return result == LTR_OK;
 }
 
 bool ltr11::close() {
   if (opened()) {
     state.running = false;
-    if (!worker->thread->wait(5000)) {
-      worker->thread->terminate();
-      worker->thread->wait();
-      qDebug() << "dataThreadFunction terminated !!!";
-    }
-    delete worker->thread;
+    pause(500);
+    //delete worker;
+    worker = nullptr;
+
     result = LTR11_Stop(ltr);
     if (result == LTR_OK)
       result = LTR11_Close(ltr);
@@ -86,37 +85,45 @@ bool ltr11::start(void* param) {
     result = LTR_ERROR_MEMORY_ALLOC;
     return false;
   }
+/*
+  worker = new LTRWorker([=]() {dataThreadFunction(recv_data_cnt, data);});
+  connect(worker, &LTRWorker::finished, this, &LTRBase::finished);
+  connect(worker, &LTRWorker::dataReady, this, &LTRBase::dataReady);
 
   state.running = true;
   result = LTR11_Start(ltr);
 
   // запуск потока
-  QThread* thread = new QThread();
-  //LTRWorker* worker = new LTRWorker(this, ltr, recv_data_cnt, data);
-  worker = new LTRWorker(thread, [=]() {dataThreadFunction(recv_data_cnt, data);});
-  worker->moveToThread(thread);
-  QObject::connect(thread, &QThread::started, worker, &LTRWorker::doWork);
-  QObject::connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-  QObject::connect(worker, &LTRWorker::finished, thread, &QThread::quit);
-  QObject::connect(worker, &LTRWorker::finished, worker, &QObject::deleteLater);
-  QObject::connect(worker, &LTRWorker::finished, worker, []() {
-    qDebug() << "LTRWorker finished";
-  });
-  //QObject::connect(worker, &LTRWorker::dataReady, this, &ltr11::dataReady);
+  worker->start();
+*/
+/*
+WorkerPool::instance().run([]()
+{
+    qDebug() << "Worker thread:"
+             << QThread::currentThread();
+});
+*/
 
-  thread->start();
+  state.running = true;
+  result = LTR11_Start(ltr);
+  worker = new Worker();
+  connect(this, &LTRBase::finished, worker, &Worker::finished);
+  worker->post([recv_data_cnt, this]() -> QString {
+    dataThreadFunction(recv_data_cnt, data);
+    return "ОК";
+  });
   return result == LTR_OK;
 }
 
 void ltr11::dataThreadFunction(const int &dataBuferLength, double *data) {
   DWORD *rbuf = (DWORD*)malloc(dataBuferLength*sizeof(DWORD));
+  INT recvd;
   while (state.running) {
-    INT recvd;
     /* в таймауте учитываем время выполнения самого преобразования*/
     DWORD tout = RECV_TOUT + (DWORD)(RECV_BLOCK_CH_SIZE/ltr->ChRate + 1);
     /* получение данных от LTR11 */
     recvd = LTR11_Recv(ltr, rbuf, NULL, dataBuferLength, tout);
-
+    if (!state.running) break;
     /* Значение меньше нуля соответствуют коду ошибки */
     if (recvd < 0) {
       result = recvd;
@@ -125,8 +132,9 @@ void ltr11::dataThreadFunction(const int &dataBuferLength, double *data) {
       result = LTR_ERROR_RECV_INSUFFICIENT_DATA;
       continue;
     }
-    /* сохранение принятых и обработанных данных в буфере */
+    /* Cохранение принятых и обработанных данных в буфере */
     result = LTR11_ProcessData(ltr, rbuf, data, &recvd, TRUE, TRUE);
+    if (!state.running) break;
     if (result != LTR_OK) continue;
     else if (state.running)
       emit dataReady(this, ltr->LChQnt, data);
@@ -136,6 +144,7 @@ void ltr11::dataThreadFunction(const int &dataBuferLength, double *data) {
 
   } // while (...)
   free(rbuf);
+  emit finished();
   qDebug() << "dataThreadFunction ended !!!";
 }
 

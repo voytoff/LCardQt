@@ -28,6 +28,8 @@ add_library(LCard SHARED
   ltr11.h ltr11.cpp
   ltrworker.h ltrworker.cpp
   ltrbase.h ltrbase.cpp
+  worker.h worker.cpp
+  workerpool.h workerpool.cpp
 )
 
 if(WIN32)

@@ -21,7 +21,7 @@ public:
 
 private:
   Ui::Dialog *ui;
-  Crate *crate;
+  Crate *crate = nullptr;
   bool closed = false;
 
 private slots:

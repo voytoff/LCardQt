@@ -31,7 +31,6 @@ public:
 private:
   QString address;
   TLTR *ltr;
-  QString ver;
   INT result;
   /** загружает хеш таблицу модулей */
   QHash<int, LTRBase*> *modules;
@@ -47,7 +46,7 @@ public slots:
   bool close();
   bool start(LCParameters *params);
   bool opened();
-  uint version();
+  QString version();
   INT error() const {return result;}
   QString lastError() const {return LCard::getErrorString(result);}
   QString &ip() {return address;}

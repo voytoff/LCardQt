@@ -10,7 +10,7 @@ class ltr11 : public LTRBase {
   Q_OBJECT
 
 public:
-  explicit ltr11(QObject *parent = nullptr);
+  explicit ltr11(const int &slot, QObject *parent = nullptr);
 
   inline Crate *crate() {return (Crate*)parent();}
   LTRBase* base() const override  {return (LTRBase*)this;}
@@ -20,7 +20,7 @@ private:
   void dataThreadFunction(const int &dataBuferLength, double *data);
 
 public slots:
-  bool open(const int &slot, const QString &serial = nullptr) override;
+  bool open(const QString &serial = nullptr) override;
   bool opened() override;
   bool start(void *param) override;
   bool close() override;

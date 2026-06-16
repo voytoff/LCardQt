@@ -26,7 +26,7 @@ test1::test1() {}
 test1::~test1() = default;
 
 void test1::initTestCase() {
-  // code to be executed before the first test function
+  qSetMessagePattern("[%{time h:mm:ss.zzz}] [%{type}] %{function} - %{message}");
 }
 
 void test1::init() {
@@ -43,7 +43,6 @@ void test1::cleanup() {
 
 
 void test1::test_case() {
-  qSetMessagePattern("[%{time h:mm:ss.zzz}] [%{type}] %{function} - %{message}");
   int n = 0;
   QApplication app(n, nullptr);
   Dialog d;
@@ -111,10 +110,10 @@ void test1::test_case1() {
     qDebug() << crate.lastError();
     return;
   }
-  if (!crate.close()) {
-    qDebug() << crate.lastError();
-    return;
-  }
+  //if (!crate.close()) {
+  //  qDebug() << crate.lastError();
+  //  return;
+  //}
 }
 
 QTEST_APPLESS_MAIN(test1)

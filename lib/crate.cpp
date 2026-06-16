@@ -50,12 +50,10 @@ Crate::Crate(const QString &addr, QObject *parent)
   }
   return result;
 }
-
+/*
 bool Crate::open() {
   result = LTR_Open(ltr);
   if (result == LTR_OK) {
-    uint v = version();
-    if (v > 0) ver = QString("%1.%2.%3.%4").arg((v >> 24) & 0xFF).arg((v >> 16) & 0xFF).arg((v >> 8) & 0xFF).arg(v & 0xFF);
     if (init()) {
       auto modules = hardware();
       foreach (auto key, modules.keys()) {
@@ -66,8 +64,8 @@ bool Crate::open() {
   }
   return result == LTR_OK;
 }
-
-bool Crate::init() {
+*/
+bool Crate::open() {
   modules->clear();
   result = LTR_Open(ltr);
   if (result == LTR_OK) {
@@ -77,14 +75,9 @@ bool Crate::init() {
       for (int slot = 1; slot <= MODULE_MAX; slot++) {
         auto type = mid[slot]&0xFF;
         if (type > 0) {
-          auto m = module(slot, mid[slot]&0xFF);
-          if (m) {
-            if (m->open(slot)) modules->insert(slot, m);
-            else {
-              result = m->error();
-              qDebug() << slot << lastError();
-            }
-          }
+          auto m = module(slot, type);
+          if (m) modules->insert(slot, m);
+          else qDebug() << "Отсутствует модуль обработки для слота" << slot << type;
         }
       }
     }
@@ -95,7 +88,7 @@ bool Crate::init() {
 LTRBase* Crate::module(const int &slot, const int &type) {
   switch (type) {
   case 11:
-    return new class ltr11(this);
+    return new class ltr11(slot, this);
   case 114:
   default:
     break;
@@ -106,18 +99,27 @@ LTRBase* Crate::module(const int &slot, const int &type) {
 bool Crate::start(LCParameters *params) {
   this->params = params;
   bool res = true;
-  if (params && params->count() > 0) {
+  if (params) {
     foreach (auto key, params->keys()) {
       auto m = modules->value(key);
       if (m) {
+        // Пробуем открыть канал
+        res = m->open();
+        if (!res) {
+          result = m->error();
+          qDebug() << lastError();
+          break; // ???
+        }
+        // Подписываемся на данные
         connect(m->base(), &LTRBase::dataReady, this, [=](LTRBase *module, const int &count, double *data) {
           emit dataReady(module, count, data);
         });
+        // Стартуем опрос модуля
         res = m->start(params->value(key));
         if (!res) {
           result = m->error();
           qDebug() << lastError();
-          break;
+          break; // ???
         }
       } else qDebug() << "Отсутствует слот с номером:" << key;
     }
@@ -150,8 +152,10 @@ bool Crate::opened() {
   return result == LTR_OK;
 }
 
-uint Crate::version() {
-  DWORD version;
-  result = LTR_GetServerVersion(ltr, &version);
-  return result == LTR_OK ? version : 0;
+QString Crate::version() {
+  DWORD v;
+  result = LTR_GetServerVersion(ltr, &v);
+  if (result == LTR_OK && v > 0)
+    return QString("%1.%2.%3.%4").arg((v >> 24) & 0xFF).arg((v >> 16) & 0xFF).arg((v >> 8) & 0xFF).arg(v & 0xFF);
+  return nullptr;
 }

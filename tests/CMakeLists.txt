@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(test1 LANGUAGES CXX)
-
 enable_testing()
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS
@@ -29,7 +27,6 @@ include_directories(../lib)
 add_executable(test1
   tst_test1.cpp
   dialog.h dialog.cpp dialog.ui
-
 )
 
 if(WIN32)
