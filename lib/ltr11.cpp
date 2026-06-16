@@ -1,6 +1,5 @@
 #include "ltr11.h"
 #include "lctypes.h"
-#include "ltrworker.h"
 #include "worker.h"
 
 #include <QHostAddress>
@@ -85,33 +84,12 @@ bool ltr11::start(void* param) {
     result = LTR_ERROR_MEMORY_ALLOC;
     return false;
   }
-/*
-  worker = new LTRWorker([=]() {dataThreadFunction(recv_data_cnt, data);});
-  connect(worker, &LTRWorker::finished, this, &LTRBase::finished);
-  connect(worker, &LTRWorker::dataReady, this, &LTRBase::dataReady);
-
-  state.running = true;
-  result = LTR11_Start(ltr);
-
-  // запуск потока
-  worker->start();
-*/
-/*
-WorkerPool::instance().run([]()
-{
-    qDebug() << "Worker thread:"
-             << QThread::currentThread();
-});
-*/
-
+  // запускаем поток
   state.running = true;
   result = LTR11_Start(ltr);
   worker = new Worker();
   connect(this, &LTRBase::finished, worker, &Worker::finished);
-  worker->post([recv_data_cnt, this]() -> QString {
-    dataThreadFunction(recv_data_cnt, data);
-    return "ОК";
-  });
+  worker->post([recv_data_cnt, this]() {dataThreadFunction(recv_data_cnt, data);});
   return result == LTR_OK;
 }
 

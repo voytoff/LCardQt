@@ -8,7 +8,7 @@ Worker::Worker(QObject* parent)
   //connect(this, &Worker::finished, &thread, &QThread::quit);
   connect(this, &Worker::finished, thread, [this]() {
     thread->quit();
-    thread->wait();
+    //thread->wait(); // <-- unknown - QThread::wait: Thread tried to wait on itself
     qDebug() << "Удачная остановка воркера...";
   });
   connect(this, &Worker::finished, this, &QObject::deleteLater);
