@@ -4,7 +4,6 @@
 #include "LCard_global.h"
 #include <QObject>
 #include <QMetaEnum>
-#include "LCard_global.h"
 
 class LCARD_EXPORT LCEnums : public QObject {
   Q_OBJECT
@@ -34,7 +33,7 @@ public:
   /** Возвращает строковое значение перечисления из карты имен */
   template <typename T>
   static QString string(T key, const EnumDesc &map) {
-    return map.value(key).description;
+    return map.value(key);
   }
 
   /** Типы крейтов */

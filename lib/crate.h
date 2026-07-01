@@ -2,6 +2,7 @@
 #define CREATE_H
 
 #include "lcard.h"
+#include "lcenums.h"
 #pragma hdrstop
 #ifdef _WIN32
 #include <conio.h>
@@ -43,7 +44,7 @@ protected:
 public:
   static int addresses(QList<LCCrateInfo> &array);
   static int crates(QList<QString> &list);
-  static int cratesEx(QList<QVariantList> &list);
+  static int cratesEx(QList<CrateInfo> &list);
 
   bool open();
   bool close();

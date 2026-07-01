@@ -1,8 +1,6 @@
 #include "crate.h"
 #include "lcard.h"
-#include "lctypes.h"
 #include "ltr11.h"
-#include "lcenums.h"
 #include <qdebug.h>
 
 #include <QHostAddress>
@@ -72,7 +70,7 @@ int Crate::crates(QList<QString> &list) {
   return result;
 }
 
-int Crate::cratesEx(QList<QVariantList> &list) {
+int Crate::cratesEx(QList<CrateInfo> &list) {
   TLTR ltr = {0};
   memset(&ltr, 0, sizeof(TLTR));
   INT result = LTR_Init(&ltr);
@@ -91,8 +89,8 @@ int Crate::cratesEx(QList<QVariantList> &list) {
         for (int j = 0; j < crates_returned; ++j) {
           if (arr[j][0] != 0) {
             TLTR_CRATE_INFO info = info_list[j];
-            auto name = QString::fromLatin1(reinterpret_cast<const char*>(arr[j])).trimmed();
-            list.append({name, (LCEnums::LTR_CrateIface)(int)(info.CrateInterface), info.CrateType});
+            auto sn = QString::fromLatin1(reinterpret_cast<const char*>(arr[j])).trimmed();
+            list.append(CrateInfo{sn, (LCEnums::LTR_CrateType)info.CrateType, (LCEnums::LTR_CrateIface)info.CrateInterface});
           }
         }
       }

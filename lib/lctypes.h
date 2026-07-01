@@ -2,6 +2,7 @@
 #define LCTYPES_H
 
 #include "ltr11api.h"
+#include "lcenums.h"
 
 #include <QString>
 #include <QHostAddress>
@@ -19,6 +20,13 @@ struct ThreadState {
   bool running = false;
   long count = 0;
 };
+
+struct CrateInfo {
+  QString sn;
+  LCEnums::LTR_CrateType type;    // Тип крейта
+  LCEnums::LTR_CrateIface iface;  // Интерфейс подключения крейта
+};
+
 
 struct LCCrateInfo {
   ulong ipAddress;        // IP-адрес крейта. Формат аналогичен полю saddr в #TLTR
