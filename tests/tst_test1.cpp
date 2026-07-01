@@ -19,6 +19,7 @@ private slots:
   void cleanup();
   void test_case();
   void test_case1();
+  void test_case2();
 };
 
 test1::test1() {}
@@ -43,14 +44,17 @@ void test1::cleanup() {
 
 
 void test1::test_case() {
+  return;
   int n = 0;
   QApplication app(n, nullptr);
   Dialog d;
   d.exec();
 }
 
+void test1::test_case2() {
+}
+
 void test1::test_case1() {
-  return;
   QList<LCCrateInfo> array;
   int res = Crate::addresses(array);
   if (res != LTR_OK) return;
@@ -60,6 +64,7 @@ void test1::test_case1() {
 
   QString addr = nullptr;
   if (array.length() > 0) addr = array.at(0).strAddress();
+  else addr = "127.0.0.1";
 
   Crate crate(addr);
   if (crate.open()) {

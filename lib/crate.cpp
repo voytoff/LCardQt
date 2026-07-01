@@ -2,16 +2,19 @@
 #include "lcard.h"
 #include "lctypes.h"
 #include "ltr11.h"
+#include "lcenums.h"
 #include <qdebug.h>
 
 #include <QHostAddress>
 #include <QString>
+#include <QChar>
 
 Crate::Crate(const QString &addr, QObject *parent)
   : QObject{parent}
   , address(addr)
   , ltr(new TLTR{0})
   , modules(new QHash<int, LTRBase*>()) {
+
   ltr->saddr = LTRD_ADDR_DEFAULT;
   ltr->sport = LTRD_PORT_DEFAULT;
   if (addr.length() > 0)
@@ -29,42 +32,75 @@ Crate::Crate(const QString &addr, QObject *parent)
   if (result == LTR_OK) {
     result = LTR_Open(&ltr);
     if (result == LTR_OK) {
-      // byte arr[,]; LTR_GetCrates(ltr, array);
       result = LTR_GetListOfIPCrates(&ltr, 0, 0, 0, &entries_found, &entries_returned, zero);
-      if (result == LTR_OK && entries_found > 0) {
-        TLTR_CRATE_IP_ENTRY tmp[entries_found];
-        std::memset(tmp, 0, entries_found * sizeof(TLTR_CRATE_IP_ENTRY));
-        result = LTR_GetListOfIPCrates(&ltr, 1, 0, 0, &entries_found, &entries_returned, tmp);
-        if (result == LTR_OK && entries_found > 0) {
-          for (int i = 0; i < entries_found; i++) {
-            LCCrateInfo info = {tmp[i].ip_addr, tmp[i].flags, QString(tmp[i].serial_number), tmp[i].status};
-            array.append(info);
+      if (result == LTR_OK) {
+        if (entries_found > 0) {
+          TLTR_CRATE_IP_ENTRY tmp[entries_found];
+          std::memset(tmp, 0, entries_found * sizeof(TLTR_CRATE_IP_ENTRY));
+          result = LTR_GetListOfIPCrates(&ltr, 1, 0, 0, &entries_found, &entries_returned, tmp);
+          if (result == LTR_OK && entries_found > 0) {
+            for (int i = 0; i < entries_found; i++) {
+              LCCrateInfo info = {tmp[i].ip_addr, tmp[i].flags, QString(tmp[i].serial_number), tmp[i].status};
+              array.append(info);
+            }
           }
-        } else {
-          qDebug() << LCard::getErrorString(result);
         }
-      } else {
-        qDebug() << LCard::getErrorString(result);
+      }
+    }
+  }
+  if (result != LTR_OK) qDebug() << LCard::getErrorString(result);
+  return result;
+}
+
+int Crate::crates(QList<QString> &list) {
+  TLTR ltr = {0};
+  memset(&ltr, 0, sizeof(TLTR));
+  INT result = LTR_Init(&ltr);
+  if (result == LTR_OK) {
+    result = LTR_Open(&ltr);
+    if (result == LTR_OK) {
+      BYTE arr[LTR_CRATES_MAX][LTR_CRATE_SERIAL_SIZE];
+      result = LTR_GetCrates(&ltr, arr[0]);
+      if (result == LTR_OK) {
+        for (int j = 0; j < LTR_CRATES_MAX; ++j) {
+          if (arr[j][0] != 0)
+            list.append(QString::fromLatin1(reinterpret_cast<const char*>(arr[j])).trimmed());
+        }
       }
     }
   }
   return result;
 }
-/*
-bool Crate::open() {
-  result = LTR_Open(ltr);
+
+int Crate::cratesEx(QList<QVariantList> &list) {
+  TLTR ltr = {0};
+  memset(&ltr, 0, sizeof(TLTR));
+  INT result = LTR_Init(&ltr);
   if (result == LTR_OK) {
-    if (init()) {
-      auto modules = hardware();
-      foreach (auto key, modules.keys()) {
-        auto m = modules.value(key);
-        m->open(key);
+    result = LTR_Open(&ltr);
+    if (result == LTR_OK) {
+      DWORD crates_found = 0;
+      DWORD crates_returned = 0;
+      CHAR arr[LTR_CRATES_MAX][LTR_CRATE_SERIAL_SIZE];
+      TLTR_CRATE_INFO info_list[LTR_CRATES_MAX];  // BYTE CrateType;      -Тип крейта -значение из en_LTR_CrateTypes
+                                                  // BYTE CrateInterface; -Интерфейс подключения крейта -значение из en_LTR_CrateIface
+
+      result = LTR_GetCratesEx(&ltr, LTR_CRATES_MAX, en_LTR_GetCratesFlags::LTR_GETCRATES_FLAGS_WORKMODE_ONLY,
+        &crates_found, &crates_returned, arr, info_list);
+      if (result == LTR_OK) {
+        for (int j = 0; j < crates_returned; ++j) {
+          if (arr[j][0] != 0) {
+            TLTR_CRATE_INFO info = info_list[j];
+            auto name = QString::fromLatin1(reinterpret_cast<const char*>(arr[j])).trimmed();
+            list.append({name, (LCEnums::LTR_CrateIface)(int)(info.CrateInterface), info.CrateType});
+          }
+        }
       }
     }
   }
-  return result == LTR_OK;
+  return result;
 }
-*/
+
 bool Crate::open() {
   modules->clear();
   result = LTR_Open(ltr);

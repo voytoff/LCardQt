@@ -25,7 +25,8 @@ Dialog::Dialog(QWidget *parent)
       if (!start()) {
         //if (!crate->close())
         line(crate->lastError());
-        crate->deleteLater();
+        //crate->deleteLater();
+        delete crate;
         crate = nullptr;
       }
     } else if (crate) {

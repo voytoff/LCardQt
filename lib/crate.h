@@ -32,7 +32,7 @@ private:
   QString address;
   TLTR *ltr;
   INT result;
-  /** загружает хеш таблицу модулей */
+  /** хеш таблицу модулей */
   QHash<int, LTRBase*> *modules;
   LCParameters *params = nullptr;
 
@@ -40,8 +40,11 @@ protected:
   bool init();
   LTRBase *module(const int &slot, const int &type);
 
-public slots:
+public:
   static int addresses(QList<LCCrateInfo> &array);
+  static int crates(QList<QString> &list);
+  static int cratesEx(QList<QVariantList> &list);
+
   bool open();
   bool close();
   bool start(LCParameters *params);
@@ -54,6 +57,8 @@ public slots:
    *  key = номер слота
    */
   QHash<int, LTRBase*> &hardware() const {return *modules;}
+
+private slots:
 
 signals:
   void dataReady(LTRBase *module, const int &count, double *data);

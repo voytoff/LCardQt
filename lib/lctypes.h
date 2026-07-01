@@ -13,6 +13,8 @@
 /* таймаут на ожидание данных при приеме (без учета времени преобразования) */
 #define RECV_TOUT  4000
 
+const int OK = LTR_OK;
+
 struct ThreadState {
   bool running = false;
   long count = 0;
