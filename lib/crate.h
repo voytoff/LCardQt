@@ -34,7 +34,6 @@ private:
   TLTR *ltr;
   INT result;
   /** хеш таблицу модулей */
-  QHash<int, LTRBase*> *modules;
   LCParameters *params = nullptr;
 
 protected:
@@ -43,8 +42,16 @@ protected:
 
 public:
   static int addresses(QList<LCCrateInfo> &array);
+  /** Получение серийных номеров подключенных крейтов */
   static int crates(QList<QString> &list);
+  /** Получение информации о подключенных крейтах */
   static int cratesEx(QList<CrateInfo> &list);
+  /** Получение описания крейта */
+  static int crateInfo(const QString &serial, CrateInfoEx &info);
+  /** Получение статистики по крейту */
+  static int crateStat(const QString &serial, CrateStatistic &statistic);
+
+  QHash<int, LTRBase*> *_modules;
 
   bool open();
   bool close();
@@ -57,7 +64,7 @@ public:
   /** возвращает информацию о модуле крейта
    *  key = номер слота
    */
-  QHash<int, LTRBase*> &hardware() const {return *modules;}
+  QHash<int, LTRBase*> &hardware() const {return *_modules;}
 
 private slots:
 

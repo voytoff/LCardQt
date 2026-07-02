@@ -11,7 +11,7 @@ Crate::Crate(const QString &addr, QObject *parent)
   : QObject{parent}
   , address(addr)
   , ltr(new TLTR{0})
-  , modules(new QHash<int, LTRBase*>()) {
+  , _modules(new QHash<int, LTRBase*>()) {
 
   ltr->saddr = LTRD_ADDR_DEFAULT;
   ltr->sport = LTRD_PORT_DEFAULT;
@@ -99,8 +99,71 @@ int Crate::cratesEx(QList<CrateInfo> &list) {
   return result;
 }
 
+int Crate::crateInfo(const QString &serial, CrateInfoEx &info) {
+  TLTR ltr = {0};
+  memset(&ltr, 0, sizeof(TLTR));
+  INT result = LTR_Init(&ltr);
+  if (result == LTR_OK) {
+
+    if (serial.length() > 0) {
+      QByteArray ba = serial.toLocal8Bit();
+      qstrncpy(ltr.csn, ba.constData(), sizeof(ltr.csn));
+    }
+
+    result = LTR_Open(&ltr);
+    if (result == LTR_OK) {
+      TLTR_CRATE_DESCR descr = {};
+      result = LTR_GetCrateDescr(&ltr, LCEnums::LTR_CrateIface::LTR_CRATE_IFACE_UNKNOWN, /*nullptr*/ltr.csn, &descr, sizeof(descr));
+      if (result == LTR_OK) {
+        info = {
+          descr.devname,
+          descr.serial,
+          descr.soft_ver,
+          descr.brd_revision,
+          descr.brd_opts,
+          descr.bootloader_ver,
+          descr.cpu_type,
+          descr.fpga_name,
+          descr.fpga_version,
+          descr.crate_type_name,
+          //descr.spec_info,
+          descr.protocol_ver_major,
+          descr.protocol_ver_minor,
+          descr.slots_config_ver_major,
+          descr.slots_config_ver_minor
+        };
+      }
+    }
+  }
+  return result;
+}
+
+int Crate::crateStat(const QString &serial, CrateStatistic &statistic) {
+  TLTR ltr = {0};
+  memset(&ltr, 0, sizeof(TLTR));
+  INT result = LTR_Init(&ltr);
+  if (result == LTR_OK) {
+    result = LTR_Open(&ltr);
+    if (result == LTR_OK) {
+
+      if (serial.length() > 0) {
+        QByteArray ba = serial.toLocal8Bit();
+        qstrncpy(ltr.csn, ba.constData(), sizeof(ltr.csn));
+      }
+      TLTR_CRATE_STATISTIC stat = {sizeof(stat), 0};
+      result = LTR_GetCrateStatistic(&ltr, LCEnums::LTR_CrateIface::LTR_CRATE_IFACE_UNKNOWN,  ltr.csn, &stat, sizeof(stat));
+      if (result == LTR_OK) {
+        statistic = {
+           stat.crate_type,
+        };
+      }
+    }
+  }
+  return result;
+}
+
 bool Crate::open() {
-  modules->clear();
+  _modules->clear();
   result = LTR_Open(ltr);
   if (result == LTR_OK) {
     WORD mid[MODULE_MAX];
@@ -110,7 +173,7 @@ bool Crate::open() {
         auto type = mid[slot]&0xFF;
         if (type > 0) {
           auto m = module(slot, type);
-          if (m) modules->insert(slot, m);
+          if (m) _modules->insert(slot, m);
           else qDebug() << "Отсутствует модуль обработки для слота" << slot << type;
         }
       }
@@ -135,7 +198,7 @@ bool Crate::start(LCParameters *params) {
   bool res = true;
   if (params) {
     foreach (auto key, params->keys()) {
-      auto m = modules->value(key);
+      auto m = _modules->value(key);
       if (m) {
         // Пробуем открыть канал
         res = m->open();
@@ -165,7 +228,7 @@ bool Crate::close() {
   bool res = true;
   if (params && params->count() > 0) {
     foreach (auto key, params->keys()) {
-      auto m = modules->value(key);
+      auto m = _modules->value(key);
       if (m) {
         res = m->close();
         if (!res) {
