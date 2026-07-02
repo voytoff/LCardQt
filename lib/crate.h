@@ -47,9 +47,9 @@ public:
   /** Получение информации о подключенных крейтах */
   static int cratesEx(QList<CrateInfo> &list);
   /** Получение описания крейта */
-  static int crateInfo(const QString &serial, CrateInfoEx &info);
+  static int crateInfo(const QString &serial, CrateInfoEx &info OUT);
   /** Получение статистики по крейту */
-  static int crateStat(const QString &serial, CrateStatistic &statistic);
+  static int crateStat(const QString &serial, CrateStatistic &statistic OUT);
 
   QHash<int, LTRBase*> *_modules;
 

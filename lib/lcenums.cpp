@@ -2,6 +2,12 @@
 
 LCEnums::LCEnums(QObject *parent) : QObject{parent} { }
 
+const EnumDesc LCEnums::LTR_CrateModeMap = {
+  {LCEnums::LTR_CRATE_MODE_BOOTLOADER, "Крейт находится в состоянии загрузчика"},
+  {LCEnums::LTR_CRATE_MODE_WORK, "Крейт находится в рабочем состоянии"},
+  {LCEnums::LTR_CRATE_MODE_CONTROL, "Крейт находится в состоянии управления"},
+};
+
 const EnumDesc LCEnums::LTR_CrateTypeMap = {
   {LCEnums::LTR_CRATE_TYPE_UNKNOWN, "Неизвестный тип крейта"},
   {LCEnums::LTR_CRATE_TYPE_LTR010, "LTR-U-8/16"},

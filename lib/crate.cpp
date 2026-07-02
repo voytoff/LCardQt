@@ -82,7 +82,6 @@ int Crate::cratesEx(QList<CrateInfo> &list) {
       CHAR arr[LTR_CRATES_MAX][LTR_CRATE_SERIAL_SIZE];
       TLTR_CRATE_INFO info_list[LTR_CRATES_MAX];  // BYTE CrateType;      -Тип крейта -значение из en_LTR_CrateTypes
                                                   // BYTE CrateInterface; -Интерфейс подключения крейта -значение из en_LTR_CrateIface
-
       result = LTR_GetCratesEx(&ltr, LTR_CRATES_MAX, en_LTR_GetCratesFlags::LTR_GETCRATES_FLAGS_WORKMODE_ONLY,
         &crates_found, &crates_returned, arr, info_list);
       if (result == LTR_OK) {
@@ -104,12 +103,10 @@ int Crate::crateInfo(const QString &serial, CrateInfoEx &info) {
   memset(&ltr, 0, sizeof(TLTR));
   INT result = LTR_Init(&ltr);
   if (result == LTR_OK) {
-
     if (serial.length() > 0) {
       QByteArray ba = serial.toLocal8Bit();
       qstrncpy(ltr.csn, ba.constData(), sizeof(ltr.csn));
     }
-
     result = LTR_Open(&ltr);
     if (result == LTR_OK) {
       TLTR_CRATE_DESCR descr = {};
@@ -126,7 +123,6 @@ int Crate::crateInfo(const QString &serial, CrateInfoEx &info) {
           descr.fpga_name,
           descr.fpga_version,
           descr.crate_type_name,
-          //descr.spec_info,
           descr.protocol_ver_major,
           descr.protocol_ver_minor,
           descr.slots_config_ver_major,
@@ -154,8 +150,32 @@ int Crate::crateStat(const QString &serial, CrateStatistic &statistic) {
       result = LTR_GetCrateStatistic(&ltr, LCEnums::LTR_CrateIface::LTR_CRATE_IFACE_UNKNOWN,  ltr.csn, &stat, sizeof(stat));
       if (result == LTR_OK) {
         statistic = {
-           stat.crate_type,
+          (LCEnums::LTR_CrateType)stat.crate_type,
+          (LCEnums::LTR_CrateIface)stat.crate_intf,
+          (LCEnums::LTR_CrateMode)stat.crate_mode,
+          stat.con_time,
+          stat.modules_cnt,
+          {/*mids*/},
+          stat.ctl_clients_cnt,
+          stat.total_mod_clients_cnt,
+          stat.wrd_sent,
+          stat.wrd_recv,
+          stat.bw_send,
+          stat.bw_recv,
+          stat.crate_wrd_recv,
+          stat.internal_rbuf_miss,
+          stat.internal_rbuf_ovfls,
+          stat.rbuf_ovfls,
+          stat.total_start_marks,
+          stat.total_sec_marks,
+          stat.crate_start_marks,
+          stat.crate_sec_marks,
+          stat.crate_unixtime,
+          stat.therm_mask,
+          {/*therm_vals*/},
         };
+        std::memcpy(statistic.mids, stat.mids, sizeof(stat.mids));
+        std::memcpy(statistic.thermVals, stat.therm_vals, sizeof(stat.therm_vals));
       }
     }
   }
